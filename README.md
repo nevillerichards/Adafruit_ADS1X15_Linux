@@ -12,3 +12,9 @@ The implementation uses the Linux SMBus interface for the i2c communication. So 
         $ sudo apt-get install i2c-tools libi2c-dev
 
 You may also need to activate the Linux i2c module on your board.
+
+Build
+-----
+Thanks to the `Makefile`, you have only to enter `make` in order to build the static library and the examples:
+
+        $ make
