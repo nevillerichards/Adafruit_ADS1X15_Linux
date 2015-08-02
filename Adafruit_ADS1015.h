@@ -5,7 +5,7 @@
     @license  BSD (see license.txt)
 
     This is a library for the Adafruit ADS1015 breakout board
-    ----> https://www.adafruit.com/products/???
+    ----> https://www.adafruit.com/products/1083
 
     Adafruit invests time and resources providing this open source code,
     please support Adafruit and open-source hardware by purchasing
@@ -15,16 +15,18 @@
 
     v1.0  - First release
     v1.1  - Added ADS1115 support - W. Earl
+    v2.0  - pcDuino version of the library - R. Reignier
 */
 /**************************************************************************/
-
-#if ARDUINO >= 100
- #include "Arduino.h"
-#else
- #include "WProgram.h"
-#endif
-
-#include <Wire.h>
+#include <errno.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <linux/i2c-dev.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 /*=========================================================================
     I2C ADDRESS/BITS
@@ -128,7 +130,6 @@ protected:
 
  public:
   Adafruit_ADS1015(uint8_t i2cAddress = ADS1015_ADDRESS);
-  void begin(void);
   uint16_t  readADC_SingleEnded(uint8_t channel);
   int16_t   readADC_Differential_0_1(void);
   int16_t   readADC_Differential_2_3(void);

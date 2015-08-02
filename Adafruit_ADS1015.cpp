@@ -7,7 +7,7 @@
     Driver for the ADS1015/ADS1115 ADC
 
     This is a library for the Adafruit MPL115A2 breakout
-    ----> https://www.adafruit.com/products/???
+    ----> https://www.adafruit.com/products/1083
 
     Adafruit invests time and resources providing this open source code,
     please support Adafruit and open-source hardware by purchasing
@@ -16,42 +16,41 @@
     @section  HISTORY
 
     v1.0 - First release
+    v2.0 - pcDuino version - R. Reignier
 */
 /**************************************************************************/
-#if ARDUINO >= 100
- #include "Arduino.h"
-#else
- #include "WProgram.h"
-#endif
-
-#include <Wire.h>
-
 #include "Adafruit_ADS1015.h"
+
+int i2cHandle;
 
 /**************************************************************************/
 /*!
-    @brief  Abstract away platform differences in Arduino wire library
+    @brief Init the i2c communication 
 */
 /**************************************************************************/
-static uint8_t i2cread(void) {
-  #if ARDUINO >= 100
-  return Wire.read();
-  #else
-  return Wire.receive();
-  #endif
+static void beginTransmission(uint8_t i2cAddress) {
+  // Create the file descriptor for the i2c bus
+  i2cHandle = open("/dev/i2c-2", O_RDWR);
+  if(i2cHandle < 0)
+  {
+    fprintf(stderr, "Error while opening the i2c-2 device! Error: %s\n", strerror(errno));
+    exit(1);
+  }
+  // Set the slave address
+  if(ioctl(i2cHandle, I2C_SLAVE, i2cAddress) < 0)
+  {
+    fprintf(stderr, "Error while configuring the slave address %d. Error: %s\n", i2cAddress, strerror(errno));
+    exit(1);
+  }
 }
 
 /**************************************************************************/
 /*!
-    @brief  Abstract away platform differences in Arduino wire library
+    @brief End the i2c communication 
 */
 /**************************************************************************/
-static void i2cwrite(uint8_t x) {
-  #if ARDUINO >= 100
-  Wire.write((uint8_t)x);
-  #else
-  Wire.send(x);
-  #endif
+static void endTransmission(void) {
+  close(i2cHandle);
 }
 
 /**************************************************************************/
@@ -60,11 +59,12 @@ static void i2cwrite(uint8_t x) {
 */
 /**************************************************************************/
 static void writeRegister(uint8_t i2cAddress, uint8_t reg, uint16_t value) {
-  Wire.beginTransmission(i2cAddress);
-  i2cwrite((uint8_t)reg);
-  i2cwrite((uint8_t)(value>>8));
-  i2cwrite((uint8_t)(value & 0xFF));
-  Wire.endTransmission();
+  beginTransmission(i2cAddress);
+  uint8_t lsb = (uint8_t)(value >> 8);
+  uint8_t msb = (uint8_t)value;
+  uint16_t payload = (msb << 8) | lsb; 
+  i2c_smbus_write_word_data(i2cHandle, reg, payload);
+  endTransmission();
 }
 
 /**************************************************************************/
@@ -73,11 +73,12 @@ static void writeRegister(uint8_t i2cAddress, uint8_t reg, uint16_t value) {
 */
 /**************************************************************************/
 static uint16_t readRegister(uint8_t i2cAddress, uint8_t reg) {
-  Wire.beginTransmission(i2cAddress);
-  i2cwrite(ADS1015_REG_POINTER_CONVERT);
-  Wire.endTransmission();
-  Wire.requestFrom(i2cAddress, (uint8_t)2);
-  return ((i2cread() << 8) | i2cread());  
+  beginTransmission(i2cAddress);
+  uint16_t res = i2c_smbus_read_word_data(i2cHandle, reg);
+  endTransmission();
+  uint8_t msb = (uint8_t)res;
+  uint8_t lsb = (uint8_t)(res >> 8);
+  return (msb << 8) | lsb;
 }
 
 /**************************************************************************/
@@ -104,15 +105,6 @@ Adafruit_ADS1115::Adafruit_ADS1115(uint8_t i2cAddress)
    m_conversionDelay = ADS1115_CONVERSIONDELAY;
    m_bitShift = 0;
    m_gain = GAIN_TWOTHIRDS; /* +/- 6.144V range (limited to VDD +0.3V max!) */
-}
-
-/**************************************************************************/
-/*!
-    @brief  Sets up the HW (reads coefficients values, etc.)
-*/
-/**************************************************************************/
-void Adafruit_ADS1015::begin() {
-  Wire.begin();
 }
 
 /**************************************************************************/
@@ -181,7 +173,7 @@ uint16_t Adafruit_ADS1015::readADC_SingleEnded(uint8_t channel) {
   writeRegister(m_i2cAddress, ADS1015_REG_POINTER_CONFIG, config);
 
   // Wait for the conversion to complete
-  delay(m_conversionDelay);
+  usleep(m_conversionDelay * 1000);
 
   // Read the conversion results
   // Shift 12-bit results right 4 bits for the ADS1015
@@ -218,7 +210,7 @@ int16_t Adafruit_ADS1015::readADC_Differential_0_1() {
   writeRegister(m_i2cAddress, ADS1015_REG_POINTER_CONFIG, config);
 
   // Wait for the conversion to complete
-  delay(m_conversionDelay);
+  usleep(m_conversionDelay * 1000);
 
   // Read the conversion results
   uint16_t res = readRegister(m_i2cAddress, ADS1015_REG_POINTER_CONVERT) >> m_bitShift;
@@ -269,7 +261,7 @@ int16_t Adafruit_ADS1015::readADC_Differential_2_3() {
   writeRegister(m_i2cAddress, ADS1015_REG_POINTER_CONFIG, config);
 
   // Wait for the conversion to complete
-  delay(m_conversionDelay);
+  usleep(m_conversionDelay * 1000);
 
   // Read the conversion results
   uint16_t res = readRegister(m_i2cAddress, ADS1015_REG_POINTER_CONVERT) >> m_bitShift;
@@ -348,7 +340,7 @@ void Adafruit_ADS1015::startComparator_SingleEnded(uint8_t channel, int16_t thre
 int16_t Adafruit_ADS1015::getLastConversionResults()
 {
   // Wait for the conversion to complete
-  delay(m_conversionDelay);
+  usleep(m_conversionDelay * 1000);
 
   // Read the conversion results
   uint16_t res = readRegister(m_i2cAddress, ADS1015_REG_POINTER_CONVERT) >> m_bitShift;
