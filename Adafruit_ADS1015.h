@@ -36,10 +36,10 @@
 /*=========================================================================*/
 
 /*=========================================================================
-    CONVERSION DELAY (in mS)
+    ADS TYPE
     -----------------------------------------------------------------------*/
-    #define ADS1015_CONVERSIONDELAY         (1)
-    #define ADS1115_CONVERSIONDELAY         (8)
+    #define ADS1015                         (1)
+    #define ADS1115                         (0)
 /*=========================================================================*/
 
 /*=========================================================================
@@ -129,7 +129,8 @@ typedef enum
   SPS_920  = ADS1015_REG_CONFIG_DR_920SPS,
   SPS_1600 = ADS1015_REG_CONFIG_DR_1600SPS,
   SPS_2400 = ADS1015_REG_CONFIG_DR_2400SPS,
-  SPS_3300 = ADS1015_REG_CONFIG_DR_3300SPS
+  SPS_3300 = ADS1015_REG_CONFIG_DR_3300SPS,
+  SPS_860  = ADS1115_REG_CONFIG_DR_860SPS
 } adsSps_t;
 
 class Adafruit_ADS1015
@@ -137,8 +138,9 @@ class Adafruit_ADS1015
  protected:
   // Instance-specific properties
   uint8_t   m_i2cAddress;
-  uint8_t   m_conversionDelay;
   uint8_t   m_bitShift;
+  uint8_t   m_adsType;
+  uint32_t  m_conversionDelay;
   adsGain_t m_gain;
   adsSps_t  m_sps;
 
@@ -153,6 +155,7 @@ class Adafruit_ADS1015
   adsGain_t getGain(void);
   void      setSps(adsSps_t sps);
   adsSps_t  getSps(void);
+  void      setConversionDelay(void);
 
  private:
 };

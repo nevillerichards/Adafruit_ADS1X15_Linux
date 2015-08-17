@@ -90,10 +90,11 @@ static uint16_t readRegister(uint8_t i2cAddress, uint8_t reg) {
 Adafruit_ADS1015::Adafruit_ADS1015(uint8_t i2cAddress) 
 {
   m_i2cAddress = i2cAddress;
-  m_conversionDelay = ADS1015_CONVERSIONDELAY;
+  m_adsType = ADS1015;
   m_bitShift = 4;
   m_gain = GAIN_TWOTHIRDS; /* +/- 6.144V range (limited to VDD +0.3V max!) */
   m_sps  = SPS_1600;
+  setConversionDelay();
 }
 
 /**************************************************************************/
@@ -104,10 +105,11 @@ Adafruit_ADS1015::Adafruit_ADS1015(uint8_t i2cAddress)
 Adafruit_ADS1115::Adafruit_ADS1115(uint8_t i2cAddress)
 {
   m_i2cAddress = i2cAddress;
-  m_conversionDelay = ADS1115_CONVERSIONDELAY;
+  m_adsType = ADS1115;
   m_bitShift = 0;
   m_gain = GAIN_TWOTHIRDS; /* +/- 6.144V range (limited to VDD +0.3V max!) */
   m_sps  = SPS_1600;
+  setConversionDelay();
 }
 
 /**************************************************************************/
@@ -138,6 +140,7 @@ adsGain_t Adafruit_ADS1015::getGain()
 void Adafruit_ADS1015::setSps(adsSps_t sps)
 {
   m_sps = sps;
+  setConversionDelay();
 }
 
 /**************************************************************************/
@@ -198,7 +201,7 @@ uint16_t Adafruit_ADS1015::readADC_SingleEnded(uint8_t channel) {
   writeRegister(m_i2cAddress, ADS1015_REG_POINTER_CONFIG, config);
 
   // Wait for the conversion to complete
-  usleep(m_conversionDelay * 1000);
+  usleep(m_conversionDelay);
 
   // Read the conversion results
   // Shift 12-bit results right 4 bits for the ADS1015
@@ -237,7 +240,7 @@ int16_t Adafruit_ADS1015::readADC_Differential_0_1() {
   writeRegister(m_i2cAddress, ADS1015_REG_POINTER_CONFIG, config);
 
   // Wait for the conversion to complete
-  usleep(m_conversionDelay * 1000);
+  usleep(m_conversionDelay);
 
   // Read the conversion results
   uint16_t res = readRegister(m_i2cAddress, ADS1015_REG_POINTER_CONVERT) >> m_bitShift;
@@ -290,7 +293,7 @@ int16_t Adafruit_ADS1015::readADC_Differential_2_3() {
   writeRegister(m_i2cAddress, ADS1015_REG_POINTER_CONFIG, config);
 
   // Wait for the conversion to complete
-  usleep(m_conversionDelay * 1000);
+  usleep(m_conversionDelay);
 
   // Read the conversion results
   uint16_t res = readRegister(m_i2cAddress, ADS1015_REG_POINTER_CONVERT) >> m_bitShift;
@@ -371,7 +374,7 @@ void Adafruit_ADS1015::startComparator_SingleEnded(uint8_t channel, int16_t thre
 int16_t Adafruit_ADS1015::getLastConversionResults()
 {
   // Wait for the conversion to complete
-  usleep(m_conversionDelay * 1000);
+  usleep(m_conversionDelay);
 
   // Read the conversion results
   uint16_t res = readRegister(m_i2cAddress, ADS1015_REG_POINTER_CONVERT) >> m_bitShift;
@@ -392,3 +395,78 @@ int16_t Adafruit_ADS1015::getLastConversionResults()
   }
 }
 
+/**************************************************************************/
+/*!
+    @brief Compute the needed delay in microseconds for the conversion
+*/
+/**************************************************************************/
+void Adafruit_ADS1015::setConversionDelay()
+{
+  if(m_adsType == ADS1015)
+  {
+    switch(m_sps)
+    {
+      case SPS_128:
+        m_conversionDelay = 1000000 / 128;
+        break;
+      case SPS_250:
+        m_conversionDelay = 1000000 / 250;
+        break;
+      case SPS_490:
+        m_conversionDelay = 1000000 / 490;
+        break;
+      case SPS_920:
+        m_conversionDelay = 1000000 / 920;
+        break;
+      case SPS_1600:
+        m_conversionDelay = 1000000 / 1600;
+        break;
+      case SPS_2400:
+        m_conversionDelay = 1000000 / 2400;
+        break;
+      case SPS_3300:
+        m_conversionDelay = 1000000 / 3300;
+        break;
+      case SPS_860:
+        m_conversionDelay = 1000000 / 3300;
+        break;
+      default:
+        m_conversionDelay = 8000;
+        break;
+    }
+  }
+  else
+  {
+    switch(m_sps)
+    {
+      case SPS_128:
+        m_conversionDelay = 1000000 / 8;
+        break;
+      case SPS_250:
+        m_conversionDelay = 1000000 / 16;
+        break;
+      case SPS_490:
+        m_conversionDelay = 1000000 / 32;
+        break;
+      case SPS_920:
+        m_conversionDelay = 1000000 / 64;
+        break;
+      case SPS_1600:
+        m_conversionDelay = 1000000 / 128;
+        break;
+      case SPS_2400:
+        m_conversionDelay = 1000000 / 250;
+        break;
+      case SPS_3300:
+        m_conversionDelay = 1000000 / 475;
+        break;
+      case SPS_860:
+        m_conversionDelay = 1000000 / 860;
+        break;
+      default:
+        m_conversionDelay = 125000;
+        break;
+    }
+  }
+  m_conversionDelay += 100; // Add 100 us to be safe
+}
