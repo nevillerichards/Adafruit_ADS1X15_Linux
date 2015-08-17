@@ -16,6 +16,7 @@
     v1.0  - First release
     v1.1  - Added ADS1115 support - W. Earl
     v2.0  - pcDuino version of the library - R. Reignier
+    v2.1 - pcDuino version with adjustable SPS - R. Reignier
 */
 /**************************************************************************/
 #include <errno.h>
@@ -89,6 +90,7 @@
     #define ADS1015_REG_CONFIG_DR_1600SPS   (0x0080)  // 1600 samples per second (default)
     #define ADS1015_REG_CONFIG_DR_2400SPS   (0x00A0)  // 2400 samples per second
     #define ADS1015_REG_CONFIG_DR_3300SPS   (0x00C0)  // 3300 samples per second
+    #define ADS1115_REG_CONFIG_DR_860SPS    (0x00E0)  // 860 samples per second for ADS1115 (3300 for ADS1015)
 
     #define ADS1015_REG_CONFIG_CMODE_MASK   (0x0010)
     #define ADS1015_REG_CONFIG_CMODE_TRAD   (0x0000)  // Traditional comparator with hysteresis (default)
@@ -119,14 +121,26 @@ typedef enum
   GAIN_SIXTEEN      = ADS1015_REG_CONFIG_PGA_0_256V
 } adsGain_t;
 
+typedef enum
+{
+  SPS_128  = ADS1015_REG_CONFIG_DR_128SPS,
+  SPS_250  = ADS1015_REG_CONFIG_DR_250SPS,
+  SPS_490  = ADS1015_REG_CONFIG_DR_490SPS,
+  SPS_920  = ADS1015_REG_CONFIG_DR_920SPS,
+  SPS_1600 = ADS1015_REG_CONFIG_DR_1600SPS,
+  SPS_2400 = ADS1015_REG_CONFIG_DR_2400SPS,
+  SPS_3300 = ADS1015_REG_CONFIG_DR_3300SPS
+} adsSps_t;
+
 class Adafruit_ADS1015
 {
-protected:
-   // Instance-specific properties
-   uint8_t   m_i2cAddress;
-   uint8_t   m_conversionDelay;
-   uint8_t   m_bitShift;
-   adsGain_t m_gain;
+ protected:
+  // Instance-specific properties
+  uint8_t   m_i2cAddress;
+  uint8_t   m_conversionDelay;
+  uint8_t   m_bitShift;
+  adsGain_t m_gain;
+  adsSps_t  m_sps;
 
  public:
   Adafruit_ADS1015(uint8_t i2cAddress = ADS1015_ADDRESS);
@@ -137,6 +151,8 @@ protected:
   int16_t   getLastConversionResults();
   void      setGain(adsGain_t gain);
   adsGain_t getGain(void);
+  void      setSps(adsSps_t sps);
+  adsSps_t  getSps(void);
 
  private:
 };

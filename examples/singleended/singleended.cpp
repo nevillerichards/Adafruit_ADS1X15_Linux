@@ -24,6 +24,22 @@ int main()
   // ads.setGain(GAIN_FOUR);       // 4x gain   +/- 1.024V  1 bit = 0.5mV    0.03125mV
   // ads.setGain(GAIN_EIGHT);      // 8x gain   +/- 0.512V  1 bit = 0.25mV   0.015625mV
   // ads.setGain(GAIN_SIXTEEN);    // 16x gain  +/- 0.256V  1 bit = 0.125mV  0.0078125mV
+
+  // The data sample rate (SPS: Sample per second) can be set between 128 and 3300 SPS
+  // for the ADS1015 with a default value of 1600 SPS and between 8 and 860 SPS for the
+  // ADS1115 with a default value of 128 SPS.
+  // As the library was first written to be used with the ADS1015, it is these values
+  // that are used for the settings:
+  //                               ADS1015  ADS1115
+  //                               -------  -------
+  // ads.setSps(SPS_128);  // SPS:     128        8
+  // ads.setSps(SPS_250);  // SPS:     250       16
+  // ads.setSps(SPS_490);  // SPS:     490       32
+  // ads.setSps(SPS_920);  // SPS:     920       64
+  // ads.setSps(SPS_1600); // SPS:    1600      128 (default)
+  // ads.setSps(SPS_2400); // SPS:    2400      250
+  // ads.setSps(SPS_3300); // SPS:    3300      475
+  // ads.setSps(SPS_860);  // SPS:    3300      860 ADS1115 specific
   
   while(1)
   {

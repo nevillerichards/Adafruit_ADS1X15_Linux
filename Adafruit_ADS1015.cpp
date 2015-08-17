@@ -17,6 +17,7 @@
 
     v1.0 - First release
     v2.0 - pcDuino version - R. Reignier
+    v2.1 - pcDuino version with adjustable SPS - R. Reignier
 */
 /**************************************************************************/
 #include "Adafruit_ADS1015.h"
@@ -88,10 +89,11 @@ static uint16_t readRegister(uint8_t i2cAddress, uint8_t reg) {
 /**************************************************************************/
 Adafruit_ADS1015::Adafruit_ADS1015(uint8_t i2cAddress) 
 {
-   m_i2cAddress = i2cAddress;
-   m_conversionDelay = ADS1015_CONVERSIONDELAY;
-   m_bitShift = 4;
-   m_gain = GAIN_TWOTHIRDS; /* +/- 6.144V range (limited to VDD +0.3V max!) */
+  m_i2cAddress = i2cAddress;
+  m_conversionDelay = ADS1015_CONVERSIONDELAY;
+  m_bitShift = 4;
+  m_gain = GAIN_TWOTHIRDS; /* +/- 6.144V range (limited to VDD +0.3V max!) */
+  m_sps  = SPS_1600;
 }
 
 /**************************************************************************/
@@ -101,10 +103,11 @@ Adafruit_ADS1015::Adafruit_ADS1015(uint8_t i2cAddress)
 /**************************************************************************/
 Adafruit_ADS1115::Adafruit_ADS1115(uint8_t i2cAddress)
 {
-   m_i2cAddress = i2cAddress;
-   m_conversionDelay = ADS1115_CONVERSIONDELAY;
-   m_bitShift = 0;
-   m_gain = GAIN_TWOTHIRDS; /* +/- 6.144V range (limited to VDD +0.3V max!) */
+  m_i2cAddress = i2cAddress;
+  m_conversionDelay = ADS1115_CONVERSIONDELAY;
+  m_bitShift = 0;
+  m_gain = GAIN_TWOTHIRDS; /* +/- 6.144V range (limited to VDD +0.3V max!) */
+  m_sps  = SPS_1600;
 }
 
 /**************************************************************************/
@@ -129,6 +132,26 @@ adsGain_t Adafruit_ADS1015::getGain()
 
 /**************************************************************************/
 /*!
+    @brief  Sets the sample rate in SPS (samples per second)
+*/
+/**************************************************************************/
+void Adafruit_ADS1015::setSps(adsSps_t sps)
+{
+  m_sps = sps;
+}
+
+/**************************************************************************/
+/*!
+    @brief  Gets the sample rate in SPS (samples per second)
+*/
+/**************************************************************************/
+adsSps_t Adafruit_ADS1015::getSps()
+{
+  return m_sps;
+}
+
+/**************************************************************************/
+/*!
     @brief  Gets a single-ended ADC reading from the specified channel
 */
 /**************************************************************************/
@@ -143,11 +166,13 @@ uint16_t Adafruit_ADS1015::readADC_SingleEnded(uint8_t channel) {
                     ADS1015_REG_CONFIG_CLAT_NONLAT  | // Non-latching (default val)
                     ADS1015_REG_CONFIG_CPOL_ACTVLOW | // Alert/Rdy active low   (default val)
                     ADS1015_REG_CONFIG_CMODE_TRAD   | // Traditional comparator (default val)
-                    ADS1015_REG_CONFIG_DR_1600SPS   | // 1600 samples per second (default)
                     ADS1015_REG_CONFIG_MODE_SINGLE;   // Single-shot mode (default)
 
   // Set PGA/voltage range
   config |= m_gain;
+
+  // Set the sample rate
+  config |= m_sps;
 
   // Set single-ended input channel
   switch (channel)
@@ -194,12 +219,14 @@ int16_t Adafruit_ADS1015::readADC_Differential_0_1() {
                     ADS1015_REG_CONFIG_CLAT_NONLAT  | // Non-latching (default val)
                     ADS1015_REG_CONFIG_CPOL_ACTVLOW | // Alert/Rdy active low   (default val)
                     ADS1015_REG_CONFIG_CMODE_TRAD   | // Traditional comparator (default val)
-                    ADS1015_REG_CONFIG_DR_1600SPS   | // 1600 samples per second (default)
                     ADS1015_REG_CONFIG_MODE_SINGLE;   // Single-shot mode (default)
 
   // Set PGA/voltage range
   config |= m_gain;
                     
+  // Set the sample rate
+  config |= m_sps;
+
   // Set channels
   config |= ADS1015_REG_CONFIG_MUX_DIFF_0_1;          // AIN0 = P, AIN1 = N
 
@@ -245,11 +272,13 @@ int16_t Adafruit_ADS1015::readADC_Differential_2_3() {
                     ADS1015_REG_CONFIG_CLAT_NONLAT  | // Non-latching (default val)
                     ADS1015_REG_CONFIG_CPOL_ACTVLOW | // Alert/Rdy active low   (default val)
                     ADS1015_REG_CONFIG_CMODE_TRAD   | // Traditional comparator (default val)
-                    ADS1015_REG_CONFIG_DR_1600SPS   | // 1600 samples per second (default)
                     ADS1015_REG_CONFIG_MODE_SINGLE;   // Single-shot mode (default)
 
   // Set PGA/voltage range
   config |= m_gain;
+
+  // Set the sample rate
+  config |= m_sps;
 
   // Set channels
   config |= ADS1015_REG_CONFIG_MUX_DIFF_2_3;          // AIN2 = P, AIN3 = N
@@ -298,13 +327,15 @@ void Adafruit_ADS1015::startComparator_SingleEnded(uint8_t channel, int16_t thre
                     ADS1015_REG_CONFIG_CLAT_LATCH   | // Latching mode
                     ADS1015_REG_CONFIG_CPOL_ACTVLOW | // Alert/Rdy active low   (default val)
                     ADS1015_REG_CONFIG_CMODE_TRAD   | // Traditional comparator (default val)
-                    ADS1015_REG_CONFIG_DR_1600SPS   | // 1600 samples per second (default)
                     ADS1015_REG_CONFIG_MODE_CONTIN  | // Continuous conversion mode
                     ADS1015_REG_CONFIG_MODE_CONTIN;   // Continuous conversion mode
 
   // Set PGA/voltage range
   config |= m_gain;
                     
+  // Set the sample rate
+  config |= m_sps;
+
   // Set single-ended input channel
   switch (channel)
   {
