@@ -1,7 +1,7 @@
 CXX=g++
 CXXFLAGS=-I../../ -W -Wall
-LDFLAGS=-lads1015 -L../../
-EXEC=Singleended
+LDFLAGS=-lads1015 -li2c -L../../
+EXEC=singleended
 SRC=singleended.cpp
 OBJ=$(SRC:.cpp=.o)
 
